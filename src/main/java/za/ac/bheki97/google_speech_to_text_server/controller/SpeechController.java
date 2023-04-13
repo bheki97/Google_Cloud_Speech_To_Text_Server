@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import za.ac.bheki97.google_speech_to_text_server.service.SpeechToTextService;
 
-import java.io.ByteArrayOutputStream;
+
 import java.io.IOException;
 
 @RestController
@@ -20,12 +20,11 @@ public class SpeechController {
     private SpeechToTextService speechService;
 
     @PostMapping("/transcribe")
-    public String transcribeAudio(@RequestParam("file") MultipartFile file,
-                                  @RequestParam("audiolang") String audLang,
-                                  @RequestParam("translationlang") String transLang) throws IOException {
+    public String transcribeAudio(@RequestParam("audio") MultipartFile audio,
+                                  @RequestParam("language") String language) throws IOException {
 
 
-        return speechService.transcribeAudio(file,audLang,transLang);
+        return speechService.transcribeAudio(audio,language);
     }
 
     @PostMapping("/read")

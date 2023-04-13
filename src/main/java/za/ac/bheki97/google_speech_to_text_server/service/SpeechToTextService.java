@@ -25,7 +25,7 @@ import java.nio.file.Paths;
 @Service
 public class SpeechToTextService {
 
-    public String transcribeAudio( MultipartFile file,String audioLang,String transLang) throws IOException {
+    public String transcribeAudio( MultipartFile file,String audioLang) throws IOException {
         SpeechClient speechClient = SpeechClient.create(SpeechSettings.newBuilder()
                         .setCredentialsProvider(
                                 FixedCredentialsProvider.create(
@@ -43,7 +43,7 @@ public class SpeechToTextService {
 
             // Configure request with local raw PCM audio
             RecognitionConfig config = RecognitionConfig.newBuilder()
-                    .setEncoding(RecognitionConfig.AudioEncoding.FLAC)
+                    .setEncoding(RecognitionConfig.AudioEncoding.ENCODING_UNSPECIFIED)
                     .setAudioChannelCount(2)
                     .setEnableSpokenPunctuation(BoolValue.of(true))
                     .setSampleRateHertz(44100)
@@ -59,9 +59,8 @@ public class SpeechToTextService {
                 // There can be several alternative transcripts for a given chunk of speech.
                 // Just use the first (most likely) one here.
                 SpeechRecognitionAlternative alternative = result.getAlternativesList().get(0);
-                return alternative.getTranscript()
-                        +"\n"+translateText(alternative.getTranscript(),audioLang,transLang);
-                //"\n"+translateToEnglish(alternative.getTranscript())
+                return alternative.getTranscript();
+
             }
 
         return "No Speech";
