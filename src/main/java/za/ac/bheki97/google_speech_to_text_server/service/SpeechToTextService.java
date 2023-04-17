@@ -25,7 +25,7 @@ import java.nio.file.Paths;
 @Service
 public class SpeechToTextService {
 
-    public String transcribeAudio( MultipartFile file,String audioLang) throws IOException {
+    public String transcribeAudio( byte[] data,String audioLang) throws IOException {
         SpeechClient speechClient = SpeechClient.create(SpeechSettings.newBuilder()
                         .setCredentialsProvider(
                                 FixedCredentialsProvider.create(
@@ -38,17 +38,16 @@ public class SpeechToTextService {
                         )
                 .build());
 
-            byte[] data = file.getBytes();
             ByteString audioBytes = ByteString.copyFrom(data);
 
             // Configure request with local raw PCM audio
             RecognitionConfig config = RecognitionConfig.newBuilder()
-                    .setEncoding(RecognitionConfig.AudioEncoding.ENCODING_UNSPECIFIED)
-                    .setAudioChannelCount(2)
-                    .setEnableSpokenPunctuation(BoolValue.of(true))
+                    .setEncoding(RecognitionConfig.AudioEncoding.FLAC)
                     .setSampleRateHertz(44100)
+                    .setAudioChannelCount(2)
                     .setLanguageCode(audioLang)
                     .build();
+
             RecognitionAudio audio = RecognitionAudio.newBuilder()
                     .setContent(audioBytes)
                     .build();
@@ -66,15 +65,27 @@ public class SpeechToTextService {
         return "No Speech";
     }
     
-    public String translateText(String text,String audioLang,String transLang) throws IOException {
+    public String translateText(String text,String originLang,String transLang) throws IOException {
         Translate translate = TranslateOptions.newBuilder()
-                .setCredentials(GoogleCredentials.fromStream(
-                                getClass().getClassLoader().getResourceAsStream("google_credentials.json")))
+                .setCredentials(GoogleCredentials.fromStream(getClass().getClassLoader()
+                        .getResourceAsStream("google_credentials.json")))
                 .build().getService();
 
-        Translation translation = translate.translate(text, Translate.TranslateOption.sourceLanguage(audioLang),
+        if(originLang.equalsIgnoreCase(transLang)){
+            return text;
+        }
+
+        if((!transLang.equalsIgnoreCase("en-US") )&& (!originLang.equalsIgnoreCase("en-US"))){
+                text = translate.translate(text, Translate.TranslateOption.sourceLanguage(originLang),
+                        Translate.TranslateOption.targetLanguage("en-US")).getTranslatedText();
+                originLang = "en-US";
+        }
+
+
+        Translation translation = translate.translate(text, Translate.TranslateOption.sourceLanguage(originLang),
                 Translate.TranslateOption.targetLanguage(transLang));
         return translation.getTranslatedText();
+
     }
 
     public MultipartFile readtext(String text,String language) throws IOException {
